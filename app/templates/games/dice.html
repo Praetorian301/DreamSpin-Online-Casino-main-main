@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="plg-dice-container">
+    <!-- Stats Bar -->
+    <div class="plg-dice-stats">
+        <div class="plg-stat-item">
+            <div class="plg-stat-icon">💰</div>
+            <div class="plg-stat-info">
+                <div class="plg-stat-value" id="dice-payout">1.86x</div>
+                <div class="plg-balance-label">PAYOUT</div>
+            </div>
+        </div>
+        <div class="plg-stat-item">
+            <div class="plg-stat-icon">🎲</div>
+            <div class="plg-stat-info">
+                <div class="plg-stat-value" id="dice-win-chance">53.00%</div>
+                <div class="plg-balance-label">WIN CHANCE</div>
+            </div>
+        </div>
+        <div class="plg-stat-item">
+            <div class="plg-stat-icon">💵</div>
+            <div class="plg-stat-info">
+                <div class="plg-stat-value" id="dice-profit">$ 0.0933</div>
+                <div class="plg-balance-label">PROFIT ON WIN</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slider Area -->
+    <div class="plg-slider-area">
+        <div class="plg-slider-header">
+            <span class="plg-slider-value" id="dice-min-display">13</span>
+            <span style="color: #10b981; font-weight: 700;">WIN ZONE</span>
+            <span class="plg-slider-value" id="dice-max-display">66</span>
+        </div>
+        <div class="plg-slider-track" id="dice-track">
+            <div class="plg-slider-handle" id="dice-handle-left"></div>
+            <div class="plg-slider-handle" id="dice-handle-right"></div>
+            <!-- Roll result marker (hidden until play) -->
+            <div id="dice-roll-marker" style="display:none; position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid #111; box-shadow:0 0 8px rgba(255,255,255,0.8); pointer-events:none; transition: left 0.4s ease;"></div>
+        </div>
+    </div>
+
+    <!-- Roll result banner (hidden until play) -->
+    <div id="dice-result-banner" style="display:none; text-align:center; padding:0.75rem; border-radius:8px; font-size:1.25rem; font-weight:700; margin-top:0.5rem; transition: all 0.3s;"></div>
+
+    <!-- Play Bar -->
+    <div class="plg-play-bar">
+        <input type="number" id="dice-bet" class="plg-bet-input" placeholder="0.05" value="0.05" min="0.05" step="0.01">
+        <button id="dice-btn-min" style="padding: 0.75rem 1.5rem; background: rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); cursor: pointer;">MIN</button>
+        <button id="dice-btn-max" style="padding: 0.75rem 1.5rem; background: rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); cursor: pointer;">MAX</button>
+        <button id="dice-btn-clear" style="padding: 0.75rem 1.5rem; background: rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); cursor: pointer;">🗑️</button>
+        <button id="dice-btn-repeat" style="padding: 0.75rem 1.5rem; background: rgba(139, 92, 246, 0.2); border: 1px solid #8b5cf6; border-radius: 8px; color: var(--text-color); cursor: pointer;">REPEAT BET</button>
+        <button id="dice-btn-autobet" style="padding: 0.75rem 1.5rem; background: rgba(55, 65, 81, 0.5); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); cursor: pointer;">AUTOBET <span id="autobet-label" style="margin-left:0.5rem; color:#ef4444; font-weight:700;">OFF</span></button>
+        <button id="dice-btn-play" class="plg-play-btn">PLAY 🎲</button>
+    </div>
+
+    <!-- History Table -->
+    <div class="plg-history-table">
+        <div class="plg-table-header">
+            <div>GAME</div>
+            <div>TIME</div>
+            <div>USER</div>
+            <div>ROLL</div>
+            <div>CHANCE</div>
+            <div>BET</div>
+            <div>RESULT</div>
+        </div>
+        <div id="dice-history-body">
+            <!-- Rows injected by JS -->
+        </div>
+    </div>
+
+    <!-- Bottom Cards -->
+    <div style="display: flex; gap: 2rem; margin-top: 2rem;">
+        <div style="flex: 1; background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 1.5rem;">
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">💵 BANK</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #10b981;">$0</div>
+        </div>
+        <div style="flex: 1; background: rgba(139, 92, 246, 0.1); border: 1px solid #8b5cf6; border-radius: 12px; padding: 1.5rem;">
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">👥 PLAYERS</div>
+            <div style="font-size: 2rem; font-weight: 700; color: var(--text-color);">0</div>
+        </div>
+    </div>
+
+    <!-- Provably Fair -->
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="{{ url_for('main.provably_fair', game_type='dice') }}" style="color: var(--text-secondary); text-decoration: none; font-size: 0.875rem;">
+            🔒 Provably Fair
+        </a>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    const HOUSE_EDGE = 0.01;
+    const MIN_BET = 0.05;
+
+    let minVal = 13;
+    let maxVal = 66;
+    let autobetActive = false;
+    let autobetTimer = null;
+    let lastBet = 0.05;
+    let playing = false;
+
+    // Element references
+    const track         = document.getElementById('dice-track');
+    const handleLeft    = document.getElementById('dice-handle-left');
+    const handleRight   = document.getElementById('dice-handle-right');
+    const rollMarker    = document.getElementById('dice-roll-marker');
+    const minDisplay    = document.getElementById('dice-min-display');
+    const maxDisplay    = document.getElementById('dice-max-display');
+    const payoutEl      = document.getElementById('dice-payout');
+    const winChanceEl   = document.getElementById('dice-win-chance');
+    const profitEl      = document.getElementById('dice-profit');
+    const betInput      = document.getElementById('dice-bet');
+    const playBtn       = document.getElementById('dice-btn-play');
+    const resultBanner  = document.getElementById('dice-result-banner');
+    const historyBody   = document.getElementById('dice-history-body');
+    const autobetLabel  = document.getElementById('autobet-label');
+
+    // ── Slider gradient + handle positioning ─────────────────────────────
+    function updateSlider() {
+        const l = minVal;
+        const r = maxVal;
+        track.style.background =
+            `linear-gradient(90deg,` +
+            ` #ef4444 0%, #ef4444 ${l}%,` +
+            ` #10b981 ${l}%, #10b981 ${r}%,` +
+            ` #ef4444 ${r}%, #ef4444 100%)`;
+        handleLeft.style.left  = l + '%';
+        handleRight.style.left = r + '%';
+        minDisplay.textContent = l;
+        maxDisplay.textContent = r;
+    }
+
+    // ── Stats recalculation ───────────────────────────────────────────────
+    function updateStats() {
+        const winChance = (maxVal - minVal) / 100;
+        const payout    = (1 - HOUSE_EDGE) / winChance;
+        const bet       = parseFloat(betInput.value) || 0;
+        const profit    = bet * (payout - 1);
+
+        payoutEl.textContent   = payout.toFixed(2) + 'x';
+        winChanceEl.textContent = (winChance * 100).toFixed(2) + '%';
+        profitEl.textContent   = '$ ' + profit.toFixed(4);
+    }
+
+    // ── Slider dragging ───────────────────────────────────────────────────
+    function makeDraggable(handle, side) {
+        let dragging = false;
+
+        function onStart(e) {
+            dragging = true;
+            e.preventDefault();
+        }
+
+        function getX(e) {
+            return e.touches ? e.touches[0].clientX : e.clientX;
+        }
+
+        function onMove(e) {
+            if (!dragging) return;
+            const rect = track.getBoundingClientRect();
+            let pct = ((getX(e) - rect.left) / rect.width) * 100;
+            pct = Math.round(Math.max(1, Math.min(99, pct)));
+
+            if (side === 'left') {
+                minVal = Math.min(pct, maxVal - 2);
+            } else {
+                maxVal = Math.max(pct, minVal + 2);
+            }
+            updateSlider();
+            updateStats();
+        }
+
+        function onEnd() { dragging = false; }
+
+        handle.addEventListener('mousedown',  onStart);
+        handle.addEventListener('touchstart', onStart, { passive: false });
+        document.addEventListener('mousemove',  onMove);
+        document.addEventListener('touchmove',  onMove, { passive: false });
+        document.addEventListener('mouseup',  onEnd);
+        document.addEventListener('touchend', onEnd);
+    }
+
+    makeDraggable(handleLeft,  'left');
+    makeDraggable(handleRight, 'right');
+
+    // ── Bet controls ──────────────────────────────────────────────────────
+    betInput.addEventListener('input', updateStats);
+
+    function getBalance() {
+        const el = document.querySelector('.balance-amount');
+        if (!el) return 0;
+        return parseFloat(el.textContent.replace(/[^0-9.]/g, '')) || 0;
+    }
+
+    document.getElementById('dice-btn-min').addEventListener('click', () => {
+        betInput.value = MIN_BET.toFixed(2);
+        updateStats();
+    });
+
+    document.getElementById('dice-btn-max').addEventListener('click', () => {
+        const bal = getBalance();
+        betInput.value = bal > 0 ? bal.toFixed(2) : MIN_BET.toFixed(2);
+        updateStats();
+    });
+
+    document.getElementById('dice-btn-clear').addEventListener('click', () => {
+        betInput.value = '';
+        updateStats();
+    });
+
+    document.getElementById('dice-btn-repeat').addEventListener('click', () => {
+        betInput.value = lastBet.toFixed(2);
+        updateStats();
+    });
+
+    // ── Autobet ───────────────────────────────────────────────────────────
+    document.getElementById('dice-btn-autobet').addEventListener('click', () => {
+        autobetActive = !autobetActive;
+        autobetLabel.textContent = autobetActive ? 'ON' : 'OFF';
+        autobetLabel.style.color = autobetActive ? '#10b981' : '#ef4444';
+
+        if (autobetActive) {
+            runPlay();
+        } else {
+            clearTimeout(autobetTimer);
+        }
+    });
+
+    // ── Play ──────────────────────────────────────────────────────────────
+    playBtn.addEventListener('click', runPlay);
+
+    async function runPlay() {
+        if (playing) return;
+
+        const bet = parseFloat(betInput.value);
+        if (!bet || bet < MIN_BET) {
+            showBanner('Enter a valid bet amount', false);
+            return;
+        }
+
+        playing = true;
+        playBtn.disabled = true;
+        playBtn.textContent = 'Rolling...';
+
+        try {
+            const res = await fetch('/api/play-dice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ min_val: minVal, max_val: maxVal, bet_amount: bet })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                lastBet = bet;
+                handleResult(data);
+            } else {
+                showBanner(data.message || 'Error placing bet', false);
+                if (autobetActive) stopAutobet();
+            }
+        } catch (err) {
+            showBanner('Connection error', false);
+            if (autobetActive) stopAutobet();
+        } finally {
+            playing = false;
+            playBtn.disabled = false;
+            playBtn.textContent = 'PLAY 🎲';
+
+            if (autobetActive) {
+                autobetTimer = setTimeout(runPlay, 1200);
+            }
+        }
+    }
+
+    function stopAutobet() {
+        autobetActive = false;
+        autobetLabel.textContent = 'OFF';
+        autobetLabel.style.color = '#ef4444';
+        clearTimeout(autobetTimer);
+    }
+
+    // ── Handle result ─────────────────────────────────────────────────────
+    function handleResult(data) {
+        const won  = data.won;
+        const roll = parseFloat(data.roll);
+
+        // Show roll marker on slider
+        rollMarker.style.display = 'block';
+        rollMarker.style.left = roll + '%';
+        rollMarker.style.background = won ? '#10b981' : '#ef4444';
+
+        // Show banner
+        const winChancePct = (maxVal - minVal).toFixed(1);
+        if (won) {
+            showBanner(`🎉 WIN! Rolled ${roll.toFixed(2)} — +$${parseFloat(data.profit).toFixed(4)}`, true);
+        } else {
+            showBanner(`❌ LOSE  Rolled ${roll.toFixed(2)} — -$${parseFloat(data.bet_amount).toFixed(2)}`, false);
+        }
+
+        // Update balance in nav
+        const balanceEl = document.querySelector('.balance-amount');
+        if (balanceEl) {
+            balanceEl.textContent = '$' + parseFloat(data.balance).toFixed(2);
+        }
+
+        // Add history row
+        addHistoryRow(data, winChancePct + '%');
+    }
+
+    function showBanner(msg, won) {
+        resultBanner.style.display = 'block';
+        resultBanner.textContent = msg;
+        resultBanner.style.background = won ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+        resultBanner.style.border = `1px solid ${won ? '#10b981' : '#ef4444'}`;
+        resultBanner.style.color  = won ? '#10b981' : '#ef4444';
+    }
+
+    function addHistoryRow(data, chancePct) {
+        const now  = new Date();
+        const time = now.toTimeString().slice(0, 8);
+        const won  = data.won;
+
+        const resultStr = won
+            ? '$ +' + parseFloat(data.profit).toFixed(4) + ' USD'
+            : '$ -' + parseFloat(data.bet_amount).toFixed(2) + ' USD';
+
+        const row = document.createElement('div');
+        row.className = 'plg-table-row';
+        row.innerHTML =
+            `<div>${data.game_id || '—'}</div>` +
+            `<div>${time}</div>` +
+            `<div>${data.username || 'You'}</div>` +
+            `<div>${parseFloat(data.roll).toFixed(2)}</div>` +
+            `<div>${chancePct}</div>` +
+            `<div>$ ${parseFloat(data.bet_amount).toFixed(2)}</div>` +
+            `<div class="${won ? 'plg-result-positive' : 'plg-result-negative'}">${resultStr}</div>`;
+
+        historyBody.insertBefore(row, historyBody.firstChild);
+
+        // Cap at 10 rows
+        while (historyBody.children.length > 10) {
+            historyBody.removeChild(historyBody.lastChild);
+        }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    updateSlider();
+    updateStats();
+})();
+</script>
+{% endblock %}

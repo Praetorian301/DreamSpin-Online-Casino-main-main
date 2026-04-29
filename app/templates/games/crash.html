@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="plg-crash-container">
+
+    <!-- Canvas -->
+    <div class="plg-crash-canvas" id="crash-canvas-wrap">
+        <canvas id="crash-canvas"></canvas>
+
+        <div id="crash-mult-display">
+            <div id="crash-mult-value">x1.00</div>
+            <div id="crash-mult-label" style="display:none">CRASHED!</div>
+        </div>
+
+        <div id="crash-waiting-overlay">
+            <div id="crash-countdown-text">NEXT ROUND IN</div>
+            <div id="crash-countdown-num">5.0</div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="plg-crash-controls">
+        <div class="crash-balance-row">
+            <span class="plg-balance-label">YOUR BALANCE</span>
+            <span class="plg-balance-value" id="crash-balance">${{ "%.2f"|format(player.balance) }}</span>
+        </div>
+
+        <div class="crash-slots-grid">
+            <!-- Slot 1 -->
+            <div class="crash-slot" id="crash-slot-0">
+                <div class="crash-slot-header">BET №1</div>
+                <div class="crash-slot-inputs">
+                    <div class="plg-input-group">
+                        <span class="plg-balance-label">AMOUNT</span>
+                        <div style="display:flex;gap:4px;align-items:center">
+                            <input type="number" id="amt-0" class="plg-bet-input" value="0.01" min="0.01" step="0.01" style="width:80px">
+                            <button class="crash-mini-btn" data-slot="0" data-action="x2">×2</button>
+                            <button class="crash-mini-btn" data-slot="0" data-action="half">÷2</button>
+                            <button class="crash-mini-btn" data-slot="0" data-action="clear">🗑</button>
+                        </div>
+                    </div>
+                    <div class="plg-input-group">
+                        <span class="plg-balance-label">AUTO CASHOUT</span>
+                        <div style="display:flex;gap:4px;align-items:center">
+                            <span style="color:#9ca3af;font-weight:700">x</span>
+                            <input type="number" id="auto-0" class="plg-bet-input" value="0" min="0" step="0.1" placeholder="0" style="width:80px">
+                        </div>
+                    </div>
+                </div>
+                <button class="plg-bet-btn" id="btn-0">BET №1</button>
+                <div class="crash-slot-result" id="result-0" style="display:none"></div>
+            </div>
+
+            <!-- Slot 2 -->
+            <div class="crash-slot" id="crash-slot-1">
+                <div class="crash-slot-header">BET №2</div>
+                <div class="crash-slot-inputs">
+                    <div class="plg-input-group">
+                        <span class="plg-balance-label">AMOUNT</span>
+                        <div style="display:flex;gap:4px;align-items:center">
+                            <input type="number" id="amt-1" class="plg-bet-input" value="0.01" min="0.01" step="0.01" style="width:80px">
+                            <button class="crash-mini-btn" data-slot="1" data-action="x2">×2</button>
+                            <button class="crash-mini-btn" data-slot="1" data-action="half">÷2</button>
+                            <button class="crash-mini-btn" data-slot="1" data-action="clear">🗑</button>
+                        </div>
+                    </div>
+                    <div class="plg-input-group">
+                        <span class="plg-balance-label">AUTO CASHOUT</span>
+                        <div style="display:flex;gap:4px;align-items:center">
+                            <span style="color:#9ca3af;font-weight:700">x</span>
+                            <input type="number" id="auto-1" class="plg-bet-input" value="0" min="0" step="0.1" placeholder="0" style="width:80px">
+                        </div>
+                    </div>
+                </div>
+                <button class="plg-bet-btn" id="btn-1">BET №2</button>
+                <div class="crash-slot-result" id="result-1" style="display:none"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History bubbles -->
+    <div class="plg-crash-history" id="crash-history"></div>
+
+    <!-- Bottom info bar -->
+    <div class="crash-bottom-bar">
+        <div class="crash-provably-fair">
+            <div style="font-size:0.75rem;color:#6b7280;font-weight:700;letter-spacing:0.1em">PROVABLY FAIR</div>
+            <div id="crash-hash" style="font-family:monospace;font-size:0.7rem;color:#4b5563;word-break:break-all">Waiting for round…</div>
+        </div>
+        <div class="crash-bank-card">
+            <div style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.25rem">💵 BANK</div>
+            <div style="font-size:1.5rem;font-weight:700;color:#10b981">$0</div>
+        </div>
+        <div class="crash-players-card">
+            <div style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.25rem">👥 PLAYERS</div>
+            <div style="font-size:1.5rem;font-weight:700;color:#e5e7eb">0</div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+// ─── Config ──────────────────────────────────────────────────────────────────
+const WAIT_MS   = 10000;   // waiting phase duration (10 seconds for bet placement)
+const CRASH_MS  = 3500;   // how long crashed state shows
+const GROWTH_K  = 0.09;   // multiplier = e^(K * elapsed_s)  → ~2.4x at 10s
+const MIN_BET   = 0.01;
+const PAD       = { l: 52, r: 24, t: 30, b: 36 };
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let phase       = 'waiting';   // waiting | flying | crashed
+let crashPoint  = 99;          // set by API; 99 = safe placeholder
+let gameKey     = null;
+let elapsedMs   = 0;
+let currentMult = 1.00;
+let waitMs      = WAIT_MS;
+let lastTs      = null;
+let launching   = false;       // prevents double-call to startRound
+let rafId       = null;
+
+const slots = [
+    { armed: false, cashedOut: false, cashoutAt: 0 },
+    { armed: false, cashedOut: false, cashoutAt: 0 },
+];
+
+let history  = [8.55, 1.19, 6.04, 1.19, 2.27, 1.13, 1.11, 1.7, 3.45, 2.73, 1.4, 1.29];
+let particles = [];
+let stars     = [];
+
+// ─── DOM ─────────────────────────────────────────────────────────────────────
+const wrap       = document.getElementById('crash-canvas-wrap');
+const canvas     = document.getElementById('crash-canvas');
+const ctx        = canvas.getContext('2d');
+const multVal    = document.getElementById('crash-mult-value');
+const multLbl    = document.getElementById('crash-mult-label');
+const waitOver   = document.getElementById('crash-waiting-overlay');
+const cntNum     = document.getElementById('crash-countdown-num');
+const balEl      = document.getElementById('crash-balance');
+const hashEl     = document.getElementById('crash-hash');
+const histEl     = document.getElementById('crash-history');
+
+const btns    = [0, 1].map(i => document.getElementById(`btn-${i}`));
+const amtIns  = [0, 1].map(i => document.getElementById(`amt-${i}`));
+const autoIns = [0, 1].map(i => document.getElementById(`auto-${i}`));
+const resEls  = [0, 1].map(i => document.getElementById(`result-${i}`));
+
+// ─── Canvas sizing ────────────────────────────────────────────────────────────
+function resizeCanvas() {
+    canvas.width  = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
+    buildStars();
+}
+
+function buildStars() {
+    stars = Array.from({ length: 130 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.4 + 0.3,
+        a: Math.random() * 0.6 + 0.2,
+    }));
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// ─── Coordinate helpers ───────────────────────────────────────────────────────
+function multToY(m) {
+    const visMax = Math.max(currentMult * 1.35, 3);
+    const h = canvas.height - PAD.t - PAD.b;
+    return canvas.height - PAD.b - (Math.log(Math.max(m, 1.0001)) / Math.log(visMax)) * h;
+}
+
+function timeToX(t_s) {
+    const visMax = Math.max(elapsedMs / 1000 + 3, 7);
+    return PAD.l + (t_s / visMax) * (canvas.width - PAD.l - PAD.r);
+}
+
+// ─── Draw ─────────────────────────────────────────────────────────────────────
+function draw() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Space background
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#080c18');
+    bg.addColorStop(1, '#04060f');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Stars
+    for (const s of stars) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+        ctx.fill();
+    }
+
+    if (phase === 'waiting') return;
+
+    const elapsed_s = elapsedMs / 1000;
+    const crashed   = phase === 'crashed';
+    const colour    = crashed ? '#ef4444' : '#10b981';
+
+    // Grid multiplier lines
+    ctx.font      = '11px monospace';
+    ctx.textAlign = 'right';
+    for (const m of [1.5, 2, 3, 5, 10]) {
+        const y = multToY(m);
+        if (y < PAD.t || y > H - PAD.b) continue;
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth   = 1;
+        ctx.beginPath();
+        ctx.moveTo(PAD.l, y); ctx.lineTo(W - PAD.r, y);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fillText(m + 'x', PAD.l - 6, y + 4);
+    }
+
+    // Build curve by sampling formula
+    const steps = Math.min(Math.floor(elapsed_s / 0.05) + 1, 400);
+    const pts   = [];
+    for (let i = 0; i <= steps; i++) {
+        const t = (i / steps) * elapsed_s;
+        pts.push({ x: timeToX(t), y: multToY(Math.exp(GROWTH_K * t)) });
+    }
+    if (pts.length < 2) return;
+
+    const tip = pts[pts.length - 1];
+
+    // Gradient fill under curve
+    const fill = ctx.createLinearGradient(0, tip.y, 0, H - PAD.b);
+    fill.addColorStop(0, crashed ? 'rgba(239,68,68,0.22)' : 'rgba(16,185,129,0.18)');
+    fill.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, H - PAD.b);
+    for (const p of pts) ctx.lineTo(p.x, p.y);
+    ctx.lineTo(tip.x, H - PAD.b);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+
+    // Glowing curve line
+    ctx.save();
+    ctx.shadowBlur  = 10;
+    ctx.shadowColor = colour;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth   = 2.5;
+    ctx.lineJoin    = 'round';
+    ctx.lineCap     = 'round';
+    ctx.beginPath();
+    pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.stroke();
+    ctx.restore();
+
+    if (phase === 'flying') {
+        // Particle trail
+        for (const p of particles) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${p.rgb},${p.a.toFixed(2)})`;
+            ctx.fill();
+        }
+
+        // Rocket glow
+        const rg = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, 22);
+        rg.addColorStop(0,   'rgba(255,255,255,0.95)');
+        rg.addColorStop(0.25,'rgba(255,210,60,0.85)');
+        rg.addColorStop(0.6, 'rgba(239,100,30,0.5)');
+        rg.addColorStop(1,   'rgba(0,0,0,0)');
+        ctx.beginPath();
+        ctx.arc(tip.x, tip.y, 22, 0, Math.PI * 2);
+        ctx.fillStyle = rg;
+        ctx.fill();
+
+        // Core dot
+        ctx.save();
+        ctx.shadowBlur  = 12;
+        ctx.shadowColor = '#fff';
+        ctx.beginPath();
+        ctx.arc(tip.x, tip.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.restore();
+    } else {
+        // Crash burst
+        ctx.save();
+        ctx.shadowBlur  = 20;
+        ctx.shadowColor = '#ef4444';
+        ctx.strokeStyle = 'rgba(239,68,68,0.9)';
+        ctx.lineWidth   = 3;
+        ctx.beginPath();
+        ctx.arc(tip.x, tip.y, 28, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(tip.x, tip.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = '#ef4444';
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+// ─── Particles ────────────────────────────────────────────────────────────────
+function tickParticles(tip) {
+    for (let i = 0; i < 4; i++) {
+        particles.push({
+            x: tip.x + (Math.random() - 0.5) * 8,
+            y: tip.y + (Math.random() - 0.5) * 8,
+            vx: -Math.random() * 3.5 - 0.5,
+            vy: (Math.random() - 0.5) * 2.5,
+            r:  Math.random() * 3 + 1,
+            a:  0.85,
+            rgb: Math.random() > 0.5 ? '255,165,30' : '239,90,30',
+        });
+    }
+    particles = particles
+        .map(p => ({ ...p, x: p.x + p.vx, y: p.y + p.vy, a: p.a - 0.022, r: p.r * 0.97 }))
+        .filter(p => p.a > 0.05 && p.r > 0.3);
+    if (particles.length > 180) particles.splice(0, particles.length - 180);
+}
+
+// ─── Main loop ────────────────────────────────────────────────────────────────
+function loop(ts) {
+    if (!lastTs) lastTs = ts;
+    const dt = Math.min(ts - lastTs, 120);
+    lastTs = ts;
+
+    if (phase === 'waiting') {
+        waitMs -= dt;
+        const s = Math.max(0, waitMs / 1000);
+        cntNum.textContent = s.toFixed(1);
+        if (waitMs <= 0 && !launching) {
+            launching = true;
+            startRound();
+        }
+
+    } else if (phase === 'flying') {
+        elapsedMs += dt;
+        const elapsed_s = elapsedMs / 1000;
+        currentMult = parseFloat(Math.exp(GROWTH_K * elapsed_s).toFixed(2));
+        multVal.textContent = 'x' + currentMult.toFixed(2);
+
+        const tip = { x: timeToX(elapsed_s), y: multToY(currentMult) };
+        tickParticles(tip);
+
+        // Update button text with potential payout
+        slots.forEach((slot, i) => {
+            if (slot.armed && !slot.cashedOut) {
+                const betAmount = parseFloat(amtIns[i].value) || 0;
+                const payout = (betAmount * currentMult).toFixed(2);
+                btns[i].textContent = `CASHOUT №${i + 1} | $${payout}`;
+            }
+        });
+
+        // Auto-cashout check
+        slots.forEach((slot, i) => {
+            if (slot.armed && !slot.cashedOut) {
+                const autoAt = parseFloat(autoIns[i].value) || 0;
+                if (autoAt >= 1.01 && currentMult >= autoAt) {
+                    doCashout(i, autoAt);
+                }
+            }
+        });
+
+        // Crash check
+        if (currentMult >= crashPoint) doCrash();
+    }
+
+    draw();
+    rafId = requestAnimationFrame(loop);
+}
+
+// ─── Phase: waiting ───────────────────────────────────────────────────────────
+function beginWaiting() {
+    phase      = 'waiting';
+    waitMs     = WAIT_MS;
+    elapsedMs  = 0;
+    currentMult= 1.00;
+    crashPoint = 99;
+    gameKey    = null;
+    launching  = false;
+    particles  = [];
+    lastTs     = null;
+
+    slots.forEach((s, i) => {
+        s.armed      = false;
+        s.cashedOut  = false;
+        s.cashoutAt  = 0;
+        btns[i].textContent  = `BET №${i + 1}`;
+        btns[i].style.background = '';
+        btns[i].style.color  = '';
+        btns[i].style.opacity = '';
+        btns[i].disabled     = false;
+        amtIns[i].disabled   = false;
+        autoIns[i].disabled  = false;
+        resEls[i].style.display = 'none';
+    });
+
+    multVal.textContent = 'x1.00';
+    multVal.style.color = '#10b981';
+    multLbl.style.display = 'none';
+    waitOver.style.display = 'flex';
+}
+
+// ─── Phase: flying ────────────────────────────────────────────────────────────
+async function startRound() {
+    waitOver.style.display = 'none';
+    phase     = 'flying';
+    elapsedMs = 0;
+    lastTs    = null;
+
+    // Lock inputs, update buttons
+    const activeBets = slots.map((slot, i) => ({
+        amount: slot.armed ? (parseFloat(amtIns[i].value) || 0) : 0,
+        auto_cashout: parseFloat(autoIns[i].value) || 0,
+    }));
+
+    slots.forEach((slot, i) => {
+        amtIns[i].disabled  = true;
+        autoIns[i].disabled = true;
+        if (slot.armed) {
+            btns[i].textContent   = `CASHOUT №${i + 1}`;
+            btns[i].style.background = 'linear-gradient(135deg,#10b981,#059669)';
+            btns[i].style.color   = '#fff';
+        } else {
+            btns[i].disabled     = true;
+            btns[i].style.opacity = '0.35';
+        }
+    });
+
+    const hasBet = activeBets.some(b => b.amount > 0);
+    if (!hasBet) {
+        // Observation mode — generate local crash point
+        crashPoint = localCrashPoint();
+        hashEl.textContent = 'Observation mode (no bets placed)';
+        return;
+    }
+
+    try {
+        const resp = await fetch('/api/crash-start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bets: activeBets }),
+        });
+        const data = await resp.json();
+        if (data.success) {
+            crashPoint = data.crash_point;
+            gameKey    = data.game_key;
+            updateBalance(data.balance);
+            hashEl.textContent = `Hash: ${data.hash}`;
+        } else {
+            alert(data.message || 'Failed to start round');
+            beginWaiting();
+        }
+    } catch (e) {
+        crashPoint = localCrashPoint();
+        hashEl.textContent = 'Server unreachable — local round';
+    }
+}
+
+// ─── Phase: crashed ───────────────────────────────────────────────────────────
+async function doCrash() {
+    if (phase === 'crashed') return;
+    phase = 'crashed';
+    particles = [];
+
+    const finalMult = crashPoint;
+    multVal.textContent  = `x${finalMult.toFixed(2)}`;
+    multVal.style.color  = '#ef4444';
+    multLbl.style.display = 'block';
+
+    // Settle each armed slot
+    const cashouts = [];
+    slots.forEach((slot, i) => {
+        if (!slot.armed) return;
+        const won    = slot.cashedOut && slot.cashoutAt > 0 && slot.cashoutAt <= finalMult;
+        const amount = parseFloat(amtIns[i].value) || 0;
+        const payout = won ? amount * slot.cashoutAt : 0;
+        const profit = payout - amount;
+        showResult(i, won, slot.cashoutAt, profit, amount);
+        btns[i].textContent  = `BET №${i + 1}`;
+        btns[i].style.background = '';
+        btns[i].style.color  = '';
+        cashouts.push({ bet_idx: i, cashout_at: slot.cashedOut ? slot.cashoutAt : 0 });
+    });
+
+    addBubble(finalMult);
+
+    if (gameKey) {
+        try {
+            const resp = await fetch('/api/crash-finish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_key: gameKey, cashouts }),
+            });
+            const data = await resp.json();
+            if (data.success) updateBalance(data.balance);
+        } catch (e) {}
+    }
+
+    setTimeout(beginWaiting, CRASH_MS);
+}
+
+// ─── Manual cashout ───────────────────────────────────────────────────────────
+function doCashout(idx, atMult) {
+    const slot = slots[idx];
+    if (!slot.armed || slot.cashedOut || phase !== 'flying') return;
+    slot.cashedOut = true;
+    slot.cashoutAt = parseFloat(atMult.toFixed(2));
+
+    const betAmount = parseFloat(amtIns[idx].value) || 0;
+    const payout = (betAmount * slot.cashoutAt).toFixed(2);
+    btns[idx].textContent    = `✓ CASHED $${payout} x${slot.cashoutAt}`;
+    btns[idx].style.background = 'linear-gradient(135deg,#1d4ed8,#1e40af)';
+    btns[idx].disabled        = true;
+}
+
+// ─── Result pill ──────────────────────────────────────────────────────────────
+function showResult(idx, won, cashoutAt, profit, amount) {
+    const el = resEls[idx];
+    el.style.display = 'block';
+    if (won) {
+        el.style.color      = '#10b981';
+        el.style.background = 'rgba(16,185,129,0.12)';
+        el.style.border     = '1px solid #10b981';
+        el.textContent = `WIN x${cashoutAt.toFixed(2)}  +$${profit.toFixed(4)}`;
+    } else {
+        el.style.color      = '#ef4444';
+        el.style.background = 'rgba(239,68,68,0.12)';
+        el.style.border     = '1px solid #ef4444';
+        el.textContent = `LOST  -$${amount.toFixed(2)}`;
+    }
+}
+
+// ─── History bubbles ──────────────────────────────────────────────────────────
+function addBubble(m) {
+    history.unshift(m);
+    if (history.length > 25) history.pop();
+    renderHistory();
+}
+
+function renderHistory() {
+    histEl.innerHTML = '';
+    history.forEach(m => {
+        const d  = document.createElement('div');
+        const cls = m >= 5 ? 'plg-bubble-yellow' : m >= 2 ? 'plg-bubble-green' : 'plg-bubble-red';
+        d.className   = `plg-crash-bubble ${cls}`;
+        d.textContent = m.toFixed(2);
+        histEl.appendChild(d);
+    });
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function localCrashPoint() {
+    // Distribution: (0.99 / r) with 1% instant-crash house edge
+    const r = Math.random();
+    if (r < 0.01) return 1.00;
+    return parseFloat(Math.max(1.00, 0.99 / r).toFixed(2));
+}
+
+function updateBalance(bal) {
+    const v = parseFloat(bal).toFixed(2);
+    if (balEl) balEl.textContent = '$' + v;
+    const nav = document.querySelector('.balance-amount');
+    if (nav) nav.textContent = '$' + v;
+}
+
+// ─── Button bindings ──────────────────────────────────────────────────────────
+btns.forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+        if (phase === 'waiting') {
+            slots[i].armed = !slots[i].armed;
+            btn.textContent       = slots[i].armed ? `✓ BET №${i + 1} ARMED` : `BET №${i + 1}`;
+            btn.style.background  = slots[i].armed
+                ? 'linear-gradient(135deg,#059669,#047857)'
+                : '';
+            btn.style.color = slots[i].armed ? '#fff' : '';
+        } else if (phase === 'flying' && slots[i].armed && !slots[i].cashedOut) {
+            doCashout(i, currentMult);
+        }
+    });
+});
+
+// Mini bet controls
+document.querySelectorAll('.crash-mini-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const i      = parseInt(btn.dataset.slot);
+        const action = btn.dataset.action;
+        const input  = amtIns[i];
+        let val = parseFloat(input.value) || MIN_BET;
+        if (action === 'x2')   val = val * 2;
+        if (action === 'half') val = Math.max(MIN_BET, val / 2);
+        if (action === 'clear') val = MIN_BET;
+        input.value = parseFloat(val.toFixed(2));
+    });
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+resizeCanvas();
+renderHistory();
+beginWaiting();
+rafId = requestAnimationFrame(loop);
+
+})();
+</script>
+{% endblock %}

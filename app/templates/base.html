@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DreamSpin Casino{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon/favicon.svg') }}">
+    
+    <!-- Elite CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- Left: Logo Section -->
+            <div class="logo-section">
+                <a href="/" class="logo-link">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="DreamSpin" class="logo-image" onerror="this.style.display='none'">
+                    <span class="logo-text">DreamSpin</span>
+                </a>
+            </div>
+            
+            <!-- Center: Navigation Links -->
+            <div class="nav-menu" id="navMenu">
+                <a href="/" class="nav-link">
+                    <span class="nav-icon">🏠</span>
+                    <span>Home</span>
+                </a>
+                <a href="/dashboard" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/deposit/crypto" class="nav-link">
+                    <span class="nav-icon">💰</span>
+                    <span>Deposit</span>
+                </a>
+                <a href="/withdraw/crypto" class="nav-link">
+                    <span class="nav-icon">💸</span>
+                    <span>Withdraw</span>
+                </a>
+                <a href="/provably-fair/dice" class="nav-link">
+                    <span class="nav-icon">🔒</span>
+                    <span>Provably Fair</span>
+                </a>
+                <a href="/bonuses" class="nav-link">
+                    <span class="nav-icon">🎁</span>
+                    <span>Bonuses</span>
+                </a>
+            </div>
+            
+            <!-- Right: User Controls -->
+            <div class="nav-right">
+                {% if current_user.is_authenticated %}
+                    <!-- Balance Display -->
+                    <div class="balance-display">
+                        <span class="balance-label">Balance:</span>
+                        <span class="balance-amount" id="balanceDisplay">${{ "%.2f"|format(current_user.balance) }}</span>
+                    </div>
+                    
+                    <!-- Username -->
+                    <span class="username">{{ current_user.username }}</span>
+                    
+                    <!-- Logout Button -->
+                    <a href="/logout" class="btn-logout">
+                        <span class="nav-icon">🚪</span>
+                        <span>Logout</span>
+                    </a>
+                {% else %}
+                    <a href="/login" class="btn-login">
+                        <span class="nav-icon">🔑</span>
+                        <span>Login</span>
+                    </a>
+                {% endif %}
+                
+                <!-- Theme Toggle -->
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                
+                <!-- Hamburger Menu (Mobile) -->
+                <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>DreamSpin Casino</h3>
+                <p>Provably fair gaming since 2024</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="/about-us">About Us</a>
+                <a href="/tos">Terms of Service</a>
+                <a href="/responsible-gaming">Responsible Gaming</a>
+            </div>
+            <div class="footer-section">
+                <h4>Support</h4>
+                <a href="/kyc">KYC Verification</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/cookie-policy">Cookie Policy</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 DreamSpin Casino. All rights reserved. | 18+ Only | Play Responsibly</p>
+        </div>
+    </footer>
+
+    <!-- Elite JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Dark Mode Script -->
+    <script>
+    // Dark mode by default
+    var theme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.classList.add('theme-' + theme);
+    
+    // Update theme icon
+    var themeIcon = document.querySelector('.theme-icon');
+    if (themeIcon) {
+        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+    </script>
+
+    <!-- Optional Theme Toggle -->
+    <script>
+    // Theme toggle function
+    function toggleTheme() {
+        var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        document.body.classList.remove('theme-' + currentTheme);
+        document.body.classList.add('theme-' + newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        var themeIcon = document.querySelector('.theme-icon');
+        if (themeIcon) {
+            themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+    }
+    
+    // Attach to button
+    var themeToggleBtn = document.getElementById('themeToggle');
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', toggleTheme);
+    }
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

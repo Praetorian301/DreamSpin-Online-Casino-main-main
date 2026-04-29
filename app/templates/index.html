@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Home - DreamSpin Casino{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    <div class="hero-section">
+        <h1>Classic Games</h1>
+        <p class="hero-subtitle">Choose your favorite game and start winning!</p>
+    </div>
+
+    <div class="games-grid-home">
+        <a href="/roulette" class="game-card-home">
+            <div class="game-icon-large">🎰</div>
+            <h3>Roulette</h3>
+            <p>Spin the wheel and win big!</p>
+            <div class="play-button">Play Now →</div>
+        </a>
+
+        <a href="/dice" class="game-card-home">
+            <div class="game-icon-large">🎲</div>
+            <h3>Dice</h3>
+            <p>Roll the dice and test your luck!</p>
+            <div class="play-button">Play Now →</div>
+        </a>
+
+        <a href="/crash" class="game-card-home">
+            <div class="game-icon-large">🚀</div>
+            <h3>Crash</h3>
+            <p>Cash out before it crashes!</p>
+            <div class="play-button">Play Now →</div>
+        </a>
+
+        <a href="/coinflip" class="game-card-home">
+            <div class="game-icon-large">🪙</div>
+            <h3>Coinflip</h3>
+            <p>Heads or tails? Double your bet!</p>
+            <div class="play-button">Play Now →</div>
+        </a>
+    </div>
+
+    <div class="features-section">
+        <h2>Why Play at DreamSpin?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h4>Provably Fair</h4>
+                <p>Every game result is cryptographically verifiable</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h4>Instant Payouts</h4>
+                <p>Withdraw your winnings instantly</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎁</div>
+                <h4>Free Credits</h4>
+                <p>Start with $1000 in demo credits</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h4>Full History</h4>
+                <p>Track all your bets and wins</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

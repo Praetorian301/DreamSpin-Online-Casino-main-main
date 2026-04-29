@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="plg-dice-container">
+    <!-- Game Display -->
+    <div style="height: 50vh; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; margin-bottom: 2rem;">
+        <div style="text-align: center;">
+            <div style="width: 200px; height: 200px; background: linear-gradient(135deg, #f4b342 0%, #d97706 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 4rem; margin: 0 auto; box-shadow: 0 20px 60px rgba(244, 179, 66, 0.4);">
+                👑
+            </div>
+            <div style="font-size: 1.5rem; margin-top: 2rem; color: var(--text-color);">Heads</div>
+        </div>
+    </div>
+
+    <!-- Control Area -->
+    <div style="background: var(--card-bg); border-radius: 16px; padding: 2rem; margin-bottom: 2rem;">
+        <!-- Choose Side -->
+        <div style="margin-bottom: 2rem;">
+            <div class="plg-balance-label" style="margin-bottom: 1rem;">CHOOSE SIDE</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <button class="plg-bet-zone" style="background: linear-gradient(135deg, #f4b342 0%, #d97706 100%); padding: 1.5rem; border-radius: 12px; border: 2px solid #f4b342; cursor: pointer;">
+                    <div style="font-size: 2rem;">👑</div>
+                    <div style="font-size: 1.125rem; font-weight: 700; margin-top: 0.5rem;">Heads</div>
+                </button>
+                <button class="plg-bet-zone" style="background: rgba(139, 92, 246, 0.2); padding: 1.5rem; border-radius: 12px; border: 2px solid rgba(139, 92, 246, 0.3); cursor: pointer;">
+                    <div style="font-size: 2rem;">⚡</div>
+                    <div style="font-size: 1.125rem; font-weight: 700; margin-top: 0.5rem;">Tails</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bet Amount -->
+        <div style="margin-bottom: 2rem;">
+            <div class="plg-balance-label" style="margin-bottom: 1rem;">BET AMOUNT</div>
+            <input type="number" class="plg-bet-input" value="100" style="width: 100%; font-size: 1.5rem; padding: 1.25rem;">
+            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                <button style="flex: 1; padding: 0.75rem; background: rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); cursor: pointer;">$10</button>
+                <button style="flex: 1; padding: 0.75rem; background: rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); cursor: pointer;">$50</button>
+                <button style="flex: 1; padding: 0.75rem; background: rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); cursor: pointer;">$100</button>
+                <button style="flex: 1; padding: 0.75rem; background: rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); cursor: pointer;">Half</button>
+                <button style="flex: 1; padding: 0.75rem; background: rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); cursor: pointer;">Max</button>
+            </div>
+        </div>
+
+        <!-- Play Button -->
+        <button class="plg-play-btn" style="width: 100%;">FLIP COIN</button>
+    </div>
+
+    <!-- Info Cards -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 1.5rem;">
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Win Chance</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #10b981;">50%</div>
+        </div>
+        <div style="background: rgba(244, 179, 66, 0.1); border: 1px solid #f4b342; border-radius: 12px; padding: 1.5rem;">
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Payout</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #f4b342;">2.00x</div>
+        </div>
+    </div>
+
+    <!-- Provably Fair -->
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="{{ url_for('main.provably_fair', game_type='coinflip') }}" style="color: var(--text-secondary); text-decoration: none; font-size: 0.875rem;">
+            🔒 Provably Fair
+        </a>
+    </div>
+</div>
+{% endblock %}

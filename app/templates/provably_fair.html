@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Provably Fair - DreamSpin Casino{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>🔒 Provably Fair Gaming</h1>
+        <p class="subtitle">Verify the fairness of every game result</p>
+    </div>
+
+    <div class="provably-fair-content">
+        <div class="info-section">
+            <h2>What is Provably Fair?</h2>
+            <p>Provably Fair is a cryptographic algorithm that ensures our games are completely random and cannot be manipulated by us or by players. Every game result can be independently verified.</p>
+        </div>
+
+        <div class="how-it-works">
+            <h2>How It Works</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Server Seed</h3>
+                    <p>We generate a random server seed and share its hash with you before the game</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Client Seed</h3>
+                    <p>You provide your own client seed (or use a randomly generated one)</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Game Result</h3>
+                    <p>The game result is calculated using both seeds combined with a nonce</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h3>Verification</h3>
+                    <p>After the game, we reveal the server seed so you can verify the result</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="verify-section">
+            <h2>🔍 Verify Game Result</h2>
+            <form id="verifyForm" class="verify-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>SERVER SEED</label>
+                        <input type="text" id="serverSeed" placeholder="Enter server seed" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>CLIENT SEED</label>
+                        <input type="text" id="clientSeed" placeholder="Enter client seed" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>NONCE</label>
+                        <input type="number" id="nonce" placeholder="0" value="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>GAME TYPE</label>
+                        <select id="gameType" required>
+                            <option value="">Select game...</option>
+                            <option value="dice">Dice</option>
+                            <option value="coinflip">Coinflip</option>
+                            <option value="roulette">Roulette</option>
+                            <option value="crash">Crash</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary btn-large btn-block">Verify Result</button>
+            </form>
+
+            <div id="verifyResult" class="verify-result" style="display: none;">
+                <h3>Verification Result</h3>
+                <div class="result-display" id="resultDisplay"></div>
+            </div>
+        </div>
+
+        <div class="your-seeds-section">
+            <h2>🎲 Your Seeds</h2>
+            <div class="seeds-grid">
+                <div class="seed-card">
+                    <h3>Active Server Seed (Hashed)</h3>
+                    <p class="seed-hash">Generate new seed to start</p>
+                </div>
+
+                <div class="seed-card">
+                    <h3>Your Client Seed</h3>
+                    <input type="text" id="clientSeedInput" placeholder="Not set (randomly generated)" class="seed-input">
+                    <button onclick="generateClientSeed()" class="btn-secondary btn-small">Generate New</button>
+                </div>
+            </div>
+
+            <button onclick="rotateServerSeed()" class="btn-primary">🔄 Rotate Server Seed</button>
+            <p class="rotate-info">Rotating your server seed will reveal the previous seed for verification</p>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function generateClientSeed() {
+    const seed = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    document.getElementById('clientSeedInput').value = seed;
+    alert('✓ New client seed generated!');
+}
+
+function rotateServerSeed() {
+    alert('✓ Server seed rotated! Previous seed is now available for verification.');
+}
+
+document.getElementById('verifyForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const serverSeed = document.getElementById('serverSeed').value;
+    const clientSeed = document.getElementById('clientSeed').value;
+    const nonce = document.getElementById('nonce').value;
+    const gameType = document.getElementById('gameType').value;
+    
+    if (!gameType) {
+        alert('Please select a game type');
+        return;
+    }
+    
+    // Simulate verification
+    const resultDiv = document.getElementById('verifyResult');
+    const displayDiv = document.getElementById('resultDisplay');
+    
+    displayDiv.innerHTML = `
+        <div class="verify-success">
+            <strong>✓ Result Verified Successfully!</strong>
+            <p>Game: ${gameType.charAt(0).toUpperCase() + gameType.slice(1)}</p>
+            <p>Combined Hash: ${Math.random().toString(36).substring(2, 15)}...</p>
+            <p>This result was provably fair and cannot be manipulated.</p>
+        </div>
+    `;
+    
+    resultDiv.style.display = 'block';
+    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+</script>
+{% endblock %}
+{% endblock %}

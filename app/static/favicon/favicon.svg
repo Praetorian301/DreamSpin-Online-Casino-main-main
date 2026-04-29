@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- Outer red ring with segments -->
+  <defs>
+    <style>
+      .red-segment { fill: #dc143c; }
+      .light-segment { fill: #e8e8e8; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <circle cx="90" cy="90" r="90" fill="#ffffff"/>
+  
+  <!-- Red segments ring -->
+  <g id="ring">
+    <!-- Segment 1 -->
+    <path class="red-segment" d="M 90,10 A 80,80 0 0,1 146.57,21.4 L 111.79,67.12 A 40,40 0 0,0 90,50 Z"/>
+    <!-- Segment 2 -->
+    <path class="light-segment" d="M 146.57,21.4 A 80,80 0 0,1 170,90 L 135,90 A 40,40 0 0,0 111.79,67.12 Z"/>
+    <!-- Segment 3 -->
+    <path class="red-segment" d="M 170,90 A 80,80 0 0,1 146.57,158.6 L 111.79,112.88 A 40,40 0 0,0 135,90 Z"/>
+    <!-- Segment 4 -->
+    <path class="light-segment" d="M 146.57,158.6 A 80,80 0 0,1 90,170 L 90,135 A 40,40 0 0,0 111.79,112.88 Z"/>
+    <!-- Segment 5 -->
+    <path class="red-segment" d="M 90,170 A 80,80 0 0,1 33.43,158.6 L 68.21,112.88 A 40,40 0 0,0 90,135 Z"/>
+    <!-- Segment 6 -->
+    <path class="light-segment" d="M 33.43,158.6 A 80,80 0 0,1 10,90 L 45,90 A 40,40 0 0,0 68.21,112.88 Z"/>
+    <!-- Segment 7 -->
+    <path class="red-segment" d="M 10,90 A 80,80 0 0,1 33.43,21.4 L 68.21,67.12 A 40,40 0 0,0 45,90 Z"/>
+    <!-- Segment 8 -->
+    <path class="light-segment" d="M 33.43,21.4 A 80,80 0 0,1 90,10 L 90,50 A 40,40 0 0,0 68.21,67.12 Z"/>
+  </g>
+  
+  <!-- Inner circle white background -->
+  <circle cx="90" cy="90" r="60" fill="#ffffff"/>
+  
+  <!-- Spade symbol -->
+  <g transform="translate(90, 90)">
+    <!-- Spade top (upside down heart) -->
+    <path d="M 0,-25 C -8,-15 -15,-8 -15,0 C -15,8 -9,15 0,15 C 9,15 15,8 15,0 C 15,-8 8,-15 0,-25 Z" fill="#2d2d2d"/>
+    <!-- Spade stem -->
+    <rect x="-3" y="15" width="6" height="12" fill="#2d2d2d"/>
+    <!-- Split down middle for shading -->
+    <path d="M 0,-25 C -8,-15 -15,-8 -15,0 C -15,8 -9,15 0,15 C 0,15 0,8 0,0 C 0,-8 -0.5,-15 0,-25 Z" fill="#1a1a1a" opacity="0.6"/>
+  </g>
+</svg>

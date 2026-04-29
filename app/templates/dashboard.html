@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - DreamSpin Casino{% endblock %}
+
+{% block content %}
+<div class="dashboard-premium">
+    <!-- Welcome Hero Section -->
+    <div class="dashboard-hero">
+        <h1 class="hero-title">Welcome back, {{ player.username }}!</h1>
+        <p class="hero-subtitle">Ready to spin and win?</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-section">
+        <div class="stat-card premium">
+            <div class="stat-icon-wrapper balance">
+                <span class="stat-icon">💰</span>
+            </div>
+            <div class="stat-details">
+                <h3 class="stat-label">Current Balance</h3>
+                <div class="stat-value balance-value">${{ "%.2f"|format(player.balance) }}</div>
+                <p class="stat-change positive">+12.5% this week</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrapper games">
+                <span class="stat-icon">🎮</span>
+            </div>
+            <div class="stat-details">
+                <h3 class="stat-label">Games Played</h3>
+                <div class="stat-value">{{ stats.total_bets }}</div>
+                <p class="stat-change">Total sessions</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrapper wagered">
+                <span class="stat-icon">💸</span>
+            </div>
+            <div class="stat-details">
+                <h3 class="stat-label">Total Wagered</h3>
+                <div class="stat-value">${{ "%.2f"|format(stats.total_wagered) }}</div>
+                <p class="stat-change">All time</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrapper won">
+                <span class="stat-icon">🏆</span>
+            </div>
+            <div class="stat-details">
+                <h3 class="stat-label">Total Won</h3>
+                <div class="stat-value won-value">${{ "%.2f"|format(stats.total_won) }}</div>
+                <p class="stat-change positive">Lifetime winnings</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Play Section -->
+    <div class="quick-play-section">
+        <div class="section-header">
+            <h2>Quick Play</h2>
+            <p>Choose your game and start winning</p>
+        </div>
+
+        <div class="games-grid-premium">
+            <a href="/roulette" class="game-card-premium roulette">
+                <div class="game-card-inner">
+                    <div class="game-icon-premium">🎰</div>
+                    <h3 class="game-title">Roulette</h3>
+                    <p class="game-desc">Spin the wheel</p>
+                    <div class="play-overlay">
+                        <span class="play-text">Play Now →</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/dice" class="game-card-premium dice">
+                <div class="game-card-inner">
+                    <div class="game-icon-premium">🎲</div>
+                    <h3 class="game-title">Dice</h3>
+                    <p class="game-desc">Roll for luck</p>
+                    <div class="play-overlay">
+                        <span class="play-text">Play Now →</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/coinflip" class="game-card-premium coinflip">
+                <div class="game-card-inner">
+                    <div class="game-icon-premium">🪙</div>
+                    <h3 class="game-title">Coinflip</h3>
+                    <p class="game-desc">Heads or tails</p>
+                    <div class="play-overlay">
+                        <span class="play-text">Play Now →</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/crash" class="game-card-premium crash">
+                <div class="game-card-inner">
+                    <div class="game-icon-premium">🚀</div>
+                    <h3 class="game-title">Crash</h3>
+                    <p class="game-desc">Cash out before crash</p>
+                    <div class="play-overlay">
+                        <span class="play-text">Play Now →</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Actions Section -->
+    <div class="actions-section">
+        <a href="/profile" class="action-card secondary">
+            <span class="action-icon">👤</span>
+            <div class="action-content">
+                <h4>View Profile</h4>
+                <p>Manage your account</p>
+            </div>
+        </a>
+
+        <a href="/history" class="action-card secondary">
+            <span class="action-icon">📊</span>
+            <div class="action-content">
+                <h4>Game History</h4>
+                <p>View all your bets</p>
+            </div>
+        </a>
+
+        <a href="/deposit/crypto" class="action-card primary">
+            <span class="action-icon">💰</span>
+            <div class="action-content">
+                <h4>Add Funds</h4>
+                <p>Deposit play money</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Reset Section -->
+    <div class="reset-section">
+        <form method="POST" action="/reset-balance" class="reset-form">
+            <p class="reset-text">Running low on credits?</p>
+            <button type="submit" class="btn-reset">Reset to $1000</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

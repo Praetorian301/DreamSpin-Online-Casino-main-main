@@ -1,0 +1,665 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+/* ── CSGO Double style roulette ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+.rl-page {
+    min-height: 100vh;
+    background: var(--bg-primary, #0f1117);
+    color: var(--text-color, #e5e7eb);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ── Strip section ─────────────────────────────────── */
+.rl-top {
+    background: var(--bg-secondary, #161b22);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 1.5rem 0 1.25rem;
+    text-align: center;
+}
+
+.rl-status-label {
+    font-size: 0.6875rem;
+    letter-spacing: 4px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.rl-strip-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    height: 92px;
+    margin-bottom: 0.875rem;
+}
+
+/* Down-pointing pointer at top-centre */
+.rl-pointer {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 13px solid transparent;
+    border-right: 13px solid transparent;
+    border-top: 20px solid #f4b342;
+    filter: drop-shadow(0 4px 10px rgba(244,179,66,.7));
+    z-index: 10;
+}
+/* Up-pointing pointer at bottom-centre */
+.rl-pointer-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 13px solid transparent;
+    border-right: 13px solid transparent;
+    border-bottom: 20px solid #f4b342;
+    filter: drop-shadow(0 -4px 10px rgba(244,179,66,.7));
+    z-index: 10;
+}
+
+/* Edge fades */
+.rl-fade {
+    position: absolute; top: 0; bottom: 0;
+    width: 130px; z-index: 5; pointer-events: none;
+}
+.rl-fade.left  { left: 0;  background: linear-gradient(to right, var(--bg-secondary, #161b22), transparent); }
+.rl-fade.right { right: 0; background: linear-gradient(to left,  var(--bg-secondary, #161b22), transparent); }
+
+#rlStrip { display: block; width: 100%; height: 92px; }
+
+/* Countdown / result display */
+.rl-timer-area { margin-top: 0.25rem; line-height: 1; }
+#rlCd  { font-size: 4rem; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+#rlRes { font-size: 4rem; font-weight: 900; color: #f4b342; display: none; }
+
+/* ── History pills ─────────────────────────────────── */
+.rl-hist-bar {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .75rem 1.5rem;
+    background: var(--bg-secondary, #161b22);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    overflow-x: auto;
+}
+.rl-hist-bar::-webkit-scrollbar { height: 4px; }
+.rl-hist-bar::-webkit-scrollbar-track { background: transparent; }
+.rl-hist-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+
+.rl-hist-label {
+    font-size: .625rem;
+    letter-spacing: 2px;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-right: .25rem;
+}
+.rl-pill {
+    min-width: 38px; height: 38px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .9375rem;
+    flex-shrink: 0; cursor: default;
+    transition: transform .15s;
+}
+.rl-pill:hover { transform: scale(1.15); }
+.rl-pill.red   { background: #7f1d1d; color: #fecaca; box-shadow: 0 0 8px rgba(127,29,29,.5); }
+.rl-pill.black { background: #1f2937; color: #d1d5db; box-shadow: 0 0 8px rgba(31,41,55,.5); }
+.rl-pill.green { background: #065f46; color: #6ee7b7; box-shadow: 0 0 8px rgba(6,95,70,.5); }
+
+/* ── Controls ──────────────────────────────────────── */
+.rl-controls {
+    max-width: 960px;
+    margin: 1.5rem auto 0;
+    padding: 0 1.25rem;
+}
+
+.rl-top-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+    background: var(--card-bg, rgba(255,255,255,.04));
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+}
+
+.rl-bal-block { display: flex; flex-direction: column; gap: .15rem; margin-right: .5rem; }
+.rl-bal-lbl { font-size: .625rem; letter-spacing: 1.5px; color: #9ca3af; text-transform: uppercase; }
+.rl-bal-val { font-size: 1.1875rem; font-weight: 800; color: #10b981; }
+
+.rl-input {
+    width: 120px;
+    padding: .55rem .85rem;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 8px;
+    color: #e5e7eb;
+    font-size: .9375rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color .2s;
+}
+.rl-input:focus { border-color: #f4b342; }
+
+.rl-btn {
+    padding: .5rem .8rem;
+    border-radius: 7px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.06);
+    color: #e5e7eb;
+    font-size: .8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+    line-height: 1.3;
+}
+.rl-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,.14);
+    border-color: #f4b342;
+    color: #f4b342;
+    transform: translateY(-1px);
+}
+.rl-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.rl-btn.clear  { background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.3);  color: #f87171; }
+.rl-btn.clear:hover:not(:disabled) { background: rgba(239,68,68,.22); }
+.rl-btn.repeat { margin-left: auto; background: rgba(244,179,66,.1); border-color: rgba(244,179,66,.3); color: #f4b342; }
+.rl-btn.repeat:hover:not(:disabled) { background: rgba(244,179,66,.22); }
+
+/* Result banner */
+.rl-banner {
+    display: none;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    animation: rlSlide .3s ease;
+}
+.rl-banner.win  { background: linear-gradient(135deg,#10b981,#059669); color:#fff; box-shadow: 0 8px 28px rgba(16,185,129,.35); }
+.rl-banner.lose { background: linear-gradient(135deg,#ef4444,#dc2626); color:#fff; box-shadow: 0 8px 28px rgba(239,68,68,.35); }
+@keyframes rlSlide { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:none} }
+
+/* ── Bet zones ─────────────────────────────────────── */
+.rl-zones {
+    display: grid;
+    grid-template-columns: 1fr .55fr 1fr;
+    gap: 1rem;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1.25rem 2rem;
+}
+
+.rl-zone {
+    border-radius: 12px;
+    border: 2px solid transparent;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+    user-select: none;
+}
+.rl-zone:hover:not(.locked) { transform: translateY(-4px); }
+.rl-zone.locked { cursor: not-allowed; opacity: .65; }
+
+.rl-zone-hd {
+    padding: 1.25rem 1.375rem 1rem;
+}
+.rl-zone-name { font-size: 1.25rem; font-weight: 800; text-transform: uppercase; color: #fff; }
+.rl-zone-sub  { font-size: .75rem; color: rgba(255,255,255,.55); font-weight: 600; margin-top: .2rem; }
+
+.rl-zone-body {
+    padding: .875rem 1.375rem 1.125rem;
+    background: rgba(0,0,0,.22);
+}
+.rl-zone-bet-row { display: flex; justify-content: space-between; align-items: baseline; }
+.rl-zone-bet-lbl { font-size: .75rem; text-transform: uppercase; letter-spacing: .5px; color: rgba(255,255,255,.45); }
+.rl-zone-bet-val { font-size: 1.0625rem; font-weight: 700; color: #f4b342; }
+
+/* Zone colour themes */
+.rl-zone.red   { background: linear-gradient(155deg,#7f1d1d,#991b1b); border-color: rgba(127,29,29,.6); }
+.rl-zone.green { background: linear-gradient(155deg,#064e3b,#065f46); border-color: rgba(6,95,70,.6); }
+.rl-zone.black { background: linear-gradient(155deg,#1f2937,#374151); border-color: rgba(31,41,55,.6); }
+
+.rl-zone.red.has-bet   { border-color: #f87171; box-shadow: 0 0 22px rgba(248,113,113,.28); }
+.rl-zone.green.has-bet { border-color: #34d399; box-shadow: 0 0 22px rgba(52,211,153,.28); }
+.rl-zone.black.has-bet { border-color: #9ca3af; box-shadow: 0 0 22px rgba(156,163,175,.22); }
+
+/* ── Footer ─────────────────────────────────────────── */
+.rl-footer {
+    text-align: center;
+    padding: 1rem;
+    border-top: 1px solid rgba(255,255,255,.06);
+}
+.rl-footer a { font-size: .8125rem; color: #6b7280; text-decoration: none; transition: color .2s; }
+.rl-footer a:hover { color: #f4b342; }
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 600px) {
+    .rl-zones { grid-template-columns: 1fr 1fr; }
+    .rl-zone.green { grid-column: 1 / -1; }
+    .rl-top-row { padding: .75rem; }
+    .rl-input { width: 90px; }
+    #rlCd, #rlRes { font-size: 3rem; }
+}
+</style>
+
+<div class="rl-page">
+
+    <!-- Strip + timer -->
+    <div class="rl-top">
+        <div class="rl-status-label" id="rlStatus">PLACE YOUR BETS</div>
+        <div class="rl-strip-wrap">
+            <div class="rl-pointer"></div>
+            <div class="rl-pointer-bottom"></div>
+            <div class="rl-fade left"></div>
+            <div class="rl-fade right"></div>
+            <canvas id="rlStrip"></canvas>
+        </div>
+        <div class="rl-timer-area">
+            <span id="rlCd">30.0</span>
+            <span id="rlRes"></span>
+        </div>
+    </div>
+
+    <!-- History -->
+    <div class="rl-hist-bar" id="rlHistBar">
+        <span class="rl-hist-label">History</span>
+    </div>
+
+    <!-- Controls -->
+    <div class="rl-controls">
+        <div class="rl-top-row">
+            <div class="rl-bal-block">
+                <div class="rl-bal-lbl">Balance</div>
+                <div class="rl-bal-val">$<span id="rlBalance">{{ player.balance|round(2) }}</span></div>
+            </div>
+            <input type="number" id="rlInput" class="rl-input" value="1" min="0.01" step="0.01" placeholder="Amount">
+            <button class="rl-btn clear"  onclick="clearBets()">CLEAR</button>
+            <button class="rl-btn"        onclick="addBet(.01)">+.01</button>
+            <button class="rl-btn"        onclick="addBet(.1)">+.1</button>
+            <button class="rl-btn"        onclick="addBet(1)">+1</button>
+            <button class="rl-btn"        onclick="addBet(10)">+10</button>
+            <button class="rl-btn"        onclick="addBet(100)">+100</button>
+            <button class="rl-btn"        onclick="halfBet()">½</button>
+            <button class="rl-btn"        onclick="doubleBet()">×2</button>
+            <button class="rl-btn"        onclick="maxBet()">MAX</button>
+            <button class="rl-btn repeat" onclick="repeatLastBet()">REPEAT BET</button>
+        </div>
+        <div class="rl-banner" id="rlBanner"></div>
+    </div>
+
+    <!-- Bet zones -->
+    <div class="rl-zones">
+        <div class="rl-zone red"   id="zRed"   onclick="placeBet('color','red',this)">
+            <div class="rl-zone-hd">
+                <div class="rl-zone-name">RED</div>
+                <div class="rl-zone-sub">WIN 2× &nbsp;·&nbsp; Numbers 1–7</div>
+            </div>
+            <div class="rl-zone-body">
+                <div class="rl-zone-bet-row">
+                    <span class="rl-zone-bet-lbl">Your bet</span>
+                    <span class="rl-zone-bet-val" id="bRed">—</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rl-zone green" id="zGreen" onclick="placeBet('number','0',this)">
+            <div class="rl-zone-hd">
+                <div class="rl-zone-name">ZERO</div>
+                <div class="rl-zone-sub">WIN 14×</div>
+            </div>
+            <div class="rl-zone-body">
+                <div class="rl-zone-bet-row">
+                    <span class="rl-zone-bet-lbl">Your bet</span>
+                    <span class="rl-zone-bet-val" id="bZero">—</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rl-zone black" id="zBlack" onclick="placeBet('color','black',this)">
+            <div class="rl-zone-hd">
+                <div class="rl-zone-name">BLACK</div>
+                <div class="rl-zone-sub">WIN 2× &nbsp;·&nbsp; Numbers 8–14</div>
+            </div>
+            <div class="rl-zone-body">
+                <div class="rl-zone-bet-row">
+                    <span class="rl-zone-bet-lbl">Your bet</span>
+                    <span class="rl-zone-bet-val" id="bBlack">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rl-footer">
+        <a href="{{ url_for('main.provably_fair', game_type='roulette') }}">🔒 Provably Fair</a>
+    </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+// ── Config ────────────────────────────────────────────────────────────────────
+const WHEEL    = [0, 11, 5, 10, 6, 9, 7, 8, 1, 14, 2, 13, 3, 12, 4];
+const N        = WHEEL.length;   // 15
+const RED_NUMS = [1, 2, 3, 4, 5, 6, 7];
+const BLK_NUMS = [8, 9, 10, 11, 12, 13, 14];
+
+const TILE_W   = 86;   // width per tile (includes gap)
+const TILE_H   = 92;
+const TILE_PAD = 4;    // gap between tiles
+
+// ── DOM ───────────────────────────────────────────────────────────────────────
+const canvas   = document.getElementById('rlStrip');
+const ctx      = canvas.getContext('2d');
+const statusEl = document.getElementById('rlStatus');
+const cdEl     = document.getElementById('rlCd');
+const resEl    = document.getElementById('rlRes');
+const balEl    = document.getElementById('rlBalance');
+const bannerEl = document.getElementById('rlBanner');
+const histBar  = document.getElementById('rlHistBar');
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let phase       = 'betting';
+let offset      = 0;          // px offset from left
+let currentBets = {};
+let lastBets    = {};
+let cdMs        = 30000;
+let cdLast      = null;
+let idleRaf     = null;
+
+const history   = [11, 6, 0, 3, 8, 1, 14, 9, 7, 4, 12, 2];
+
+// ── Canvas setup ──────────────────────────────────────────────────────────────
+function resize() {
+    canvas.width  = canvas.parentElement.clientWidth || 800;
+    canvas.height = TILE_H;
+    drawStrip(offset);
+}
+
+// ── Draw strip ────────────────────────────────────────────────────────────────
+function tileStyle(num) {
+    if (num === 0)              return { bg: '#065f46', border: '#34d399', text: '#6ee7b7' };
+    if (RED_NUMS.includes(num)) return { bg: '#7f1d1d', border: '#f87171', text: '#fecaca' };
+    return                              { bg: '#1f2937', border: '#6b7280', text: '#d1d5db' };
+}
+
+function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y,     x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x,     y + h, x,     y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x,     y,     x + r, y);
+    ctx.closePath();
+}
+
+function drawStrip(off) {
+    const W = canvas.width;
+    ctx.clearRect(0, 0, W, TILE_H);
+    ctx.fillStyle = '#161b22';
+    ctx.fillRect(0, 0, W, TILE_H);
+
+    const firstIdx = Math.floor(off / TILE_W) - 1;
+    const lastIdx  = firstIdx + Math.ceil(W / TILE_W) + 3;
+    const centerTile = Math.round((off + W / 2 - TILE_W / 2) / TILE_W);
+
+    for (let i = firstIdx; i <= lastIdx; i++) {
+        const x    = Math.round(i * TILE_W - off);
+        const num  = WHEEL[((i % N) + N) % N];
+        const s    = tileStyle(num);
+        const tx   = x + TILE_PAD;
+        const tw   = TILE_W - TILE_PAD * 2;
+        const ty   = 5;
+        const th   = TILE_H - 10;
+
+        roundRect(tx, ty, tw, th, 8);
+        ctx.fillStyle   = s.bg;
+        ctx.fill();
+        ctx.strokeStyle = (i === centerTile) ? '#f4b342' : s.border;
+        ctx.lineWidth   = (i === centerTile) ? 3 : 1.5;
+        ctx.stroke();
+
+        ctx.font         = `bold 24px Arial, sans-serif`;
+        ctx.fillStyle    = s.text;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(num, tx + tw / 2, ty + th / 2);
+    }
+}
+
+// ── Idle slow scroll (betting phase) ─────────────────────────────────────────
+function startIdleScroll() {
+    stopIdleScroll();
+    const SPEED = 0.7;
+    function frame() {
+        if (phase !== 'betting') return;
+        offset += SPEED;
+        drawStrip(offset);
+        idleRaf = requestAnimationFrame(frame);
+    }
+    idleRaf = requestAnimationFrame(frame);
+}
+function stopIdleScroll() {
+    if (idleRaf) { cancelAnimationFrame(idleRaf); idleRaf = null; }
+}
+
+// ── Countdown ─────────────────────────────────────────────────────────────────
+function startCountdown() {
+    // Normalise offset to avoid float drift over many rounds
+    offset  = ((offset % (N * TILE_W)) + N * TILE_W) % (N * TILE_W);
+    phase   = 'betting';
+    cdMs    = 30000;
+    cdLast  = null;
+
+    statusEl.textContent  = 'PLACE YOUR BETS';
+    cdEl.textContent      = '30.0';
+    cdEl.style.display    = 'inline';
+    resEl.style.display   = 'none';
+    bannerEl.style.display= 'none';
+    setZonesLocked(false);
+    startIdleScroll();
+    requestAnimationFrame(cdTick);
+}
+
+function cdTick(ts) {
+    if (phase !== 'betting') return;
+    if (!cdLast) cdLast = ts;
+    cdMs -= (ts - cdLast);
+    cdLast = ts;
+    if (cdMs <= 0) {
+        cdEl.textContent = '0.0';
+        doSpin();
+        return;
+    }
+    cdEl.textContent = (cdMs / 1000).toFixed(1);
+    requestAnimationFrame(cdTick);
+}
+
+// ── Spin ──────────────────────────────────────────────────────────────────────
+async function doSpin() {
+    if (phase !== 'betting') return;
+    phase = 'spinning';
+    stopIdleScroll();
+    setZonesLocked(true);
+
+    statusEl.textContent = 'SPINNING';
+    cdEl.style.display   = 'none';
+    resEl.style.display  = 'none';
+
+    const betsArr  = Object.values(currentBets).filter(b => b.amount > 0);
+    let resultNum  = null;
+    let serverData = null;
+
+    try {
+        const r = await fetch('/api/play-roulette', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ bets: betsArr })
+        });
+        const d = await r.json();
+        if (d.success) { serverData = d; resultNum = d.result; updateBalance(d.balance); }
+    } catch (_) {}
+
+    if (resultNum === null) resultNum = WHEEL[Math.floor(Math.random() * N)];
+
+    lastBets = JSON.parse(JSON.stringify(currentBets));
+
+    // Target offset calculation
+    const W         = canvas.width;
+    const resultIdx = WHEEL.indexOf(resultNum);
+    const curCenter = Math.round((offset + W / 2 - TILE_W / 2) / TILE_W);
+    const minExtra  = 9 * N;   // min 9 full loops
+    let targetTile  = curCenter + minExtra;
+    while (((targetTile % N) + N) % N !== resultIdx) targetTile++;
+    const targetOff = targetTile * TILE_W - (W / 2 - TILE_W / 2);
+
+    animateStrip(offset, targetOff, 4500, () => {
+        offset = targetOff;
+        showResult(resultNum, serverData);
+    });
+}
+
+// ── Strip animation ────────────────────────────────────────────────────────────
+function animateStrip(from, to, dur, cb) {
+    const t0    = performance.now();
+    const delta = to - from;
+    function frame(now) {
+        const t     = Math.min((now - t0) / dur, 1);
+        const eased = 1 - Math.pow(1 - t, 4);   // ease-out quartic
+        offset = from + eased * delta;
+        drawStrip(offset);
+        if (t < 1) requestAnimationFrame(frame);
+        else { offset = to; drawStrip(to); if (cb) cb(); }
+    }
+    requestAnimationFrame(frame);
+}
+
+// ── Show result ────────────────────────────────────────────────────────────────
+function showResult(num, data) {
+    phase = 'result';
+    const col = num === 0 ? '#34d399' : RED_NUMS.includes(num) ? '#f87171' : '#d1d5db';
+    statusEl.textContent = 'RESULT';
+    resEl.textContent    = num;
+    resEl.style.color    = col;
+    resEl.style.display  = 'inline';
+    cdEl.style.display   = 'none';
+
+    if (data && data.total_bet > 0) showBanner(data.total_won > 0, data.total_won, data.total_bet);
+    addHistory(num);
+    currentBets = {};
+    updateBetDisplay();
+    setTimeout(startCountdown, 5000);
+}
+
+// ── Banner ────────────────────────────────────────────────────────────────────
+function showBanner(won, totalWon, totalBet) {
+    bannerEl.className     = 'rl-banner ' + (won ? 'win' : 'lose');
+    bannerEl.textContent   = won
+        ? `YOU WON $${parseFloat(totalWon).toFixed(2)}!`
+        : `You lost $${parseFloat(totalBet).toFixed(2)}`;
+    bannerEl.style.display = 'block';
+    setTimeout(() => { bannerEl.style.display = 'none'; }, 4500);
+}
+
+// ── Bet placement ──────────────────────────────────────────────────────────────
+function placeBet(type, value, el) {
+    if (phase !== 'betting') return;
+    const amount  = parseFloat(document.getElementById('rlInput').value) || 0;
+    const balance = parseFloat(balEl.textContent) || 0;
+    if (amount <= 0 || amount > balance) {
+        rlInput().style.borderColor = '#f87171';
+        setTimeout(() => { rlInput().style.borderColor = ''; }, 600);
+        return;
+    }
+    const key = type + '_' + value;
+    if (!currentBets[key]) currentBets[key] = { type, value, amount: 0 };
+    currentBets[key].amount = parseFloat((currentBets[key].amount + amount).toFixed(4));
+    updateBetDisplay();
+    el.style.transform = 'scale(1.04)';
+    setTimeout(() => { el.style.transform = ''; }, 200);
+}
+
+function updateBetDisplay() {
+    const map = { color_red: 'bRed', 'number_0': 'bZero', color_black: 'bBlack' };
+    const zones = { color_red: 'zRed', 'number_0': 'zGreen', color_black: 'zBlack' };
+    for (const [k, id] of Object.entries(map)) {
+        const b  = currentBets[k];
+        document.getElementById(id).textContent = b ? `$${b.amount.toFixed(2)}` : '—';
+        document.getElementById(zones[k]).classList.toggle('has-bet', !!b);
+    }
+}
+
+// ── Bet input helpers ─────────────────────────────────────────────────────────
+function rlInput()    { return document.getElementById('rlInput'); }
+function addBet(v)    { const i=rlInput(); i.value=(parseFloat(i.value||0)+v).toFixed(2); }
+function halfBet()    { const i=rlInput(); i.value=Math.max(0.01,parseFloat(i.value||0)/2).toFixed(2); }
+function doubleBet()  { const i=rlInput(); i.value=(parseFloat(i.value||0)*2).toFixed(2); }
+function maxBet()     { rlInput().value=(parseFloat(balEl.textContent)||0).toFixed(2); }
+function clearBets()  { currentBets={}; updateBetDisplay(); }
+function repeatLastBet() {
+    if (!Object.keys(lastBets).length) return;
+    currentBets = JSON.parse(JSON.stringify(lastBets));
+    updateBetDisplay();
+}
+
+// ── Locked state ──────────────────────────────────────────────────────────────
+function setZonesLocked(locked) {
+    ['zRed','zGreen','zBlack'].forEach(id => {
+        document.getElementById(id).classList.toggle('locked', locked);
+    });
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+function addHistory(num) {
+    history.unshift(num);
+    if (history.length > 30) history.pop();
+    renderHistory();
+}
+function renderHistory() {
+    // Keep the label, replace pills
+    const label = histBar.querySelector('.rl-hist-label');
+    histBar.innerHTML = '';
+    histBar.appendChild(label);
+    history.forEach(n => {
+        const d = document.createElement('div');
+        d.className   = 'rl-pill ' + (n === 0 ? 'green' : RED_NUMS.includes(n) ? 'red' : 'black');
+        d.textContent = n;
+        histBar.appendChild(d);
+    });
+}
+
+// ── Balance ───────────────────────────────────────────────────────────────────
+function updateBalance(val) {
+    const v = parseFloat(val).toFixed(2);
+    balEl.textContent = v;
+    // Update nav bar balance if present
+    const nav = document.querySelector('[data-balance], .nav-balance-val');
+    if (nav) nav.textContent = '$' + v;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => { resize(); });
+resize();
+renderHistory();
+startCountdown();
+
+})();
+</script>
+{% endblock %}

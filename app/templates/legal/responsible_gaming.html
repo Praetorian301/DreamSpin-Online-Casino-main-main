@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Responsible Gaming - DreamSpin Casino{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="legal-container">
+        <h1>🛡️ Responsible Gaming</h1>
+        <p class="page-subtitle">Gaming should be fun. We're here to help keep it that way.</p>
+
+        <div class="content-section highlight-section">
+            <h2>Our Commitment</h2>
+            <p>At DreamSpin Casino, we believe gambling should be an entertaining leisure activity, not a way to make money or solve financial problems. We are committed to promoting responsible gaming and providing tools to help you stay in control.</p>
+            <p><strong>If you're concerned about your gambling, please reach out for help. You're not alone.</strong></p>
+        </div>
+
+        <div class="content-section">
+            <h2>🎮 What is Responsible Gaming?</h2>
+            <p>Responsible gaming means:</p>
+            <ul class="checklist">
+                <li>✓ Only gambling what you can afford to lose</li>
+                <li>✓ Setting time and money limits before you play</li>
+                <li>✓ Never chasing losses</li>
+                <li>✓ Taking regular breaks</li>
+                <li>✓ Viewing gambling as entertainment, not income</li>
+                <li>✓ Being honest with yourself about your gambling habits</li>
+                <li>✓ Seeking help if gambling causes problems</li>
+            </ul>
+        </div>
+
+        <div class="content-section">
+            <h2>⚠️ Warning Signs of Problem Gambling</h2>
+            <p>You may have a gambling problem if you:</p>
+            <div class="warning-signs">
+                <div class="warning-item">
+                    <span class="warning-icon">⚠️</span>
+                    <p>Spend more money or time gambling than you intended</p>
+                </div>
+                <div class="warning-item">
+                    <span class="warning-icon">⚠️</span>
+                    <p>Feel the need to be secretive about your gambling</p>
+                </div>
+                <div class="warning-item">
+                    <span class="warning-icon">⚠️</span>
+                    <p>Have difficulty controlling or stopping your gambling</p>
+                </div>
+                <div class="warning-item">
+                    <span class="warning-icon">⚠️</span>
+                    <p>Gamble when you can't afford to lose</p>
+                </div>
+                <div class="warning-item">
+                    <span class="warning-icon">⚠️</span>
+                    <p>Family and friends are worried about your gambling</p>
+                </div>
+                <div class="warning-item">
+                    <span class="warning-icon">⚠️</span>
+                    <p>Feel anxious, guilty, or depressed about gambling</p>
+                </div>
+                <div class="warning-item">
+                    <span class="warning-icon">⚠️</span>
+                    <p>Chase losses by gambling more</p>
+                </div>
+                <div class="warning-item">
+                    <span class="warning-icon">⚠️</span>
+                    <p>Neglect work, school, or family due to gambling</p>
+                </div>
+            </div>
+            <p class="warning-footer">If any of these apply to you, please consider using our self-exclusion tools or seeking professional help.</p>
+        </div>
+
+        <div class="content-section">
+            <h2>🛠️ Our Responsible Gaming Tools</h2>
+            <div class="tools-grid">
+                <div class="tool-card">
+                    <h3>💰 Deposit Limits</h3>
+                    <p>Set daily, weekly, or monthly deposit limits. Once set, you cannot increase the limit for 24 hours.</p>
+                    <button class="tool-btn" onclick="location.href='/account/limits'">Set Deposit Limits</button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3>📉 Loss Limits</h3>
+                    <p>Set maximum loss amounts over specific time periods to protect yourself from significant losses.</p>
+                    <button class="tool-btn" onclick="location.href='/account/limits'">Set Loss Limits</button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3>⏰ Session Time Limits</h3>
+                    <p>Receive reminders after a set amount of playing time to help you take breaks.</p>
+                    <button class="tool-btn" onclick="location.href='/account/limits'">Set Time Limits</button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3>⏸️ Take a Break</h3>
+                    <p>Temporarily suspend your account for 24 hours, 7 days, or 30 days.</p>
+                    <button class="tool-btn" onclick="location.href='/account/self-exclusion'">Take a Break</button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3>🚫 Self-Exclusion</h3>
+                    <p>Permanently close your account for a minimum of 6 months. This is not reversible.</p>
+                    <button class="tool-btn warning" onclick="location.href='/account/self-exclusion'">Self-Exclude</button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3>📊 Activity History</h3>
+                    <p>Review your complete gambling history including deposits, bets, wins, and losses.</p>
+                    <button class="tool-btn" onclick="location.href='/account/history'">View History</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>💡 Tips for Staying in Control</h2>
+            <div class="tips-list">
+                <div class="tip-item">
+                    <h4>Set a Budget</h4>
+                    <p>Before you start, decide how much money you can afford to lose. Never gamble with money needed for bills, rent, or other essentials.</p>
+                </div>
+                <div class="tip-item">
+                    <h4>Set Time Limits</h4>
+                    <p>Decide how long you'll play before you start. Use a timer or alarm to remind yourself when it's time to stop.</p>
+                </div>
+                <div class="tip-item">
+                    <h4>Never Chase Losses</h4>
+                    <p>Accept that losses are part of gambling. Don't try to win back what you've lost by gambling more.</p>
+                </div>
+                <div class="tip-item">
+                    <h4>Take Regular Breaks</h4>
+                    <p>Step away from the screen regularly. Take a walk, have a meal, or do something completely different.</p>
+                </div>
+                <div class="tip-item">
+                    <h4>Don't Gamble Under Influence</h4>
+                    <p>Avoid gambling when you're drinking alcohol or taking drugs. Your judgment is impaired.</p>
+                </div>
+                <div class="tip-item">
+                    <h4>Balance Your Life</h4>
+                    <p>Gambling shouldn't be your only hobby. Maintain other interests and social connections.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🆘 Get Help</h2>
+            <p>If you're struggling with gambling, professional help is available. These organizations provide free, confidential support:</p>
+            
+            <div class="help-resources">
+                <div class="resource-card">
+                    <h4>🌐 International</h4>
+                    <p><strong>Gamblers Anonymous</strong></p>
+                    <p><a href="https://www.gamblersanonymous.org" target="_blank">www.gamblersanonymous.org</a></p>
+                    <p>Free support groups worldwide</p>
+                </div>
+                
+                <div class="resource-card">
+                    <h4>🇺🇸 United States</h4>
+                    <p><strong>National Council on Problem Gambling</strong></p>
+                    <p><a href="tel:1-800-522-4700">1-800-522-4700</a></p>
+                    <p><a href="https://www.ncpgambling.org" target="_blank">www.ncpgambling.org</a></p>
+                    <p>24/7 confidential helpline</p>
+                </div>
+                
+                <div class="resource-card">
+                    <h4>🇬🇧 United Kingdom</h4>
+                    <p><strong>GamCare</strong></p>
+                    <p><a href="tel:0808-8020-133">0808 8020 133</a></p>
+                    <p><a href="https://www.gamcare.org.uk" target="_blank">www.gamcare.org.uk</a></p>
+                    <p>Free support and counseling</p>
+                </div>
+                
+                <div class="resource-card">
+                    <h4>🇦🇺 Australia</h4>
+                    <p><strong>Gambling Help Online</strong></p>
+                    <p><a href="tel:1800-858-858">1800 858 858</a></p>
+                    <p><a href="https://www.gamblinghelponline.org.au" target="_blank">www.gamblinghelponline.org.au</a></p>
+                    <p>24/7 support and live chat</p>
+                </div>
+                
+                <div class="resource-card">
+                    <h4>🇨🇦 Canada</h4>
+                    <p><strong>Problem Gambling Helpline</strong></p>
+                    <p><a href="tel:1-888-230-3505">1-888-230-3505</a></p>
+                    <p>Confidential support services</p>
+                </div>
+                
+                <div class="resource-card">
+                    <h4>🌍 Europe</h4>
+                    <p><strong>EGBA Responsible Gaming</strong></p>
+                    <p><a href="https://www.egba.eu" target="_blank">www.egba.eu</a></p>
+                    <p>Links to local support organizations</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>👨‍👩‍👧‍👦 Information for Family and Friends</h2>
+            <p>If someone you care about has a gambling problem:</p>
+            <ul>
+                <li>Approach them with concern, not judgment</li>
+                <li>Listen without lecturing</li>
+                <li>Encourage them to seek professional help</li>
+                <li>Don't loan them money or pay their gambling debts</li>
+                <li>Consider seeking support for yourself - problem gambling affects families</li>
+                <li>Contact support organizations for guidance on how to help</li>
+            </ul>
+        </div>
+
+        <div class="content-section">
+            <h2>🔞 Underage Gambling Prevention</h2>
+            <p>DreamSpin Casino is strictly for users 18 years or older (or the legal age in your jurisdiction). We:</p>
+            <ul>
+                <li>Verify age during account registration</li>
+                <li>Block access from IP addresses associated with minors</li>
+                <li>Immediately close accounts found to belong to minors</li>
+                <li>Refund deposits to parents/guardians and confiscate winnings</li>
+            </ul>
+            <p><strong>Parents:</strong> Use parental control software to block gambling sites. Talk to your children about the risks of gambling.</p>
+        </div>
+
+        <div class="urgent-help-box">
+            <h3>🆘 Need Immediate Help?</h3>
+            <p>If you're in crisis or need urgent support:</p>
+            <div class="urgent-contacts">
+                <a href="tel:1-800-522-4700" class="urgent-btn">Call 1-800-522-4700 (US)</a>
+                <a href="https://www.gamblersanonymous.org" target="_blank" class="urgent-btn">Find Support Group</a>
+                <a href="/account/self-exclusion" class="urgent-btn">Self-Exclude Now</a>
+            </div>
+            <p class="urgent-note">Remember: Seeking help is a sign of strength, not weakness.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

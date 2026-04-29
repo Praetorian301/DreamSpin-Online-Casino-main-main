@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Bonuses & Promotions - DreamSpin Casino{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>🎁 Bonuses & Promotions</h1>
+        <p class="subtitle">Boost your gaming with exclusive bonuses and rewards</p>
+    </div>
+
+    <div class="bonuses-section">
+        <h2>🔥 Active Promotions</h2>
+        <div class="bonuses-grid">
+            <div class="bonus-card featured">
+                <div class="bonus-badge">NEW</div>
+                <div class="bonus-icon">🎰</div>
+                <h3>Welcome Bonus</h3>
+                <div class="bonus-amount">200% up to $1000</div>
+                <p class="bonus-description">Get a massive 200% match on your first deposit! Start your DreamSpin journey with extra credits.</p>
+                <ul class="bonus-features">
+                    <li>✓ 200% match bonus</li>
+                    <li>✓ Up to $1000 credits</li>
+                    <li>✓ Valid for 7 days</li>
+                    <li>✓ 30x wagering requirement</li>
+                </ul>
+                <button class="btn-primary btn-block" onclick="claimBonus('welcome')">Claim Now</button>
+            </div>
+
+            <div class="bonus-card">
+                <div class="bonus-icon">💰</div>
+                <h3>Daily Cashback</h3>
+                <div class="bonus-amount">10% Cashback</div>
+                <p class="bonus-description">Get 10% of your losses back every day. Automatically credited at midnight UTC.</p>
+                <ul class="bonus-features">
+                    <li>✓ 10% daily cashback</li>
+                    <li>✓ No maximum limit</li>
+                    <li>✓ Instant credit</li>
+                    <li>✓ No wagering requirement</li>
+                </ul>
+                <button class="btn-secondary btn-block" onclick="claimBonus('cashback')">Auto-Active</button>
+            </div>
+
+            <div class="bonus-card">
+                <div class="bonus-icon">🎲</div>
+                <h3>Free Spins Weekend</h3>
+                <div class="bonus-amount">50 Free Spins</div>
+                <p class="bonus-description">Play 50 free spins on any game every weekend. No deposit required!</p>
+                <ul class="bonus-features">
+                    <li>✓ 50 free spins</li>
+                    <li>✓ Any game eligible</li>
+                    <li>✓ Weekends only</li>
+                    <li>✓ 20x wagering</li>
+                </ul>
+                <button class="btn-primary btn-block" onclick="claimBonus('freespins')">Claim Now</button>
+            </div>
+
+            <div class="bonus-card">
+                <div class="bonus-icon">⭐</div>
+                <h3>VIP Reload</h3>
+                <div class="bonus-amount">50% Reload</div>
+                <p class="bonus-description">VIP members get 50% reload bonus on every deposit. Unlimited uses!</p>
+                <ul class="bonus-features">
+                    <li>✓ 50% match bonus</li>
+                    <li>✓ Unlimited uses</li>
+                    <li>✓ VIP members only</li>
+                    <li>✓ 25x wagering</li>
+                </ul>
+                <button class="btn-secondary btn-block disabled">VIP Only</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loyalty-section">
+        <h2>💎 Loyalty Rewards Program</h2>
+        <div class="loyalty-grid">
+            <div class="loyalty-info">
+                <h3>Your Current Level</h3>
+                <div class="level-display">
+                    <div class="level-icon">🥉</div>
+                    <div class="level-details">
+                        <h4>Bronze Member</h4>
+                        <p>Level 1</p>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 35%;"></div>
+                </div>
+                <p class="progress-text">350 / 1000 points to Silver</p>
+            </div>
+
+            <div class="loyalty-tiers">
+                <h3>Membership Tiers</h3>
+                <div class="tiers-grid">
+                    <div class="tier active">
+                        <div class="tier-icon">🥉</div>
+                        <div class="tier-name">Bronze</div>
+                        <div class="tier-benefit">5% cashback</div>
+                    </div>
+                    <div class="tier">
+                        <div class="tier-icon">🥈</div>
+                        <div class="tier-name">Silver</div>
+                        <div class="tier-benefit">10% cashback</div>
+                    </div>
+                    <div class="tier">
+                        <div class="tier-icon">🥇</div>
+                        <div class="tier-name">Gold</div>
+                        <div class="tier-benefit">15% cashback</div>
+                    </div>
+                    <div class="tier">
+                        <div class="tier-icon">💎</div>
+                        <div class="tier-name">Diamond</div>
+                        <div class="tier-benefit">25% cashback</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="promo-code-section">
+        <h2>🎟️ Have a Promo Code?</h2>
+        <form id="promoForm" class="promo-form">
+            <input type="text" id="promoCode" placeholder="Enter promo code" required>
+            <button type="submit" class="btn-primary">Redeem</button>
+        </form>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function claimBonus(bonusType) {
+    const bonusNames = {
+        'welcome': 'Welcome Bonus (200% up to $1000)',
+        'cashback': 'Daily Cashback',
+        'freespins': '50 Free Spins',
+        'vip': 'VIP Reload Bonus'
+    };
+    
+    alert(`✓ ${bonusNames[bonusType]} claimed!\n\nBonus will be credited to your account shortly.`);
+}
+
+document.getElementById('promoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const code = document.getElementById('promoCode').value;
+    
+    if (code.toUpperCase() === 'DREAM100') {
+        alert('✓ Promo code redeemed!\n\n100 bonus credits added to your account!');
+        document.getElementById('promoCode').value = '';
+    } else {
+        alert('❌ Invalid promo code. Please try again.');
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

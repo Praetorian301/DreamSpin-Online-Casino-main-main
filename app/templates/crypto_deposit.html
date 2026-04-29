@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Crypto Deposit - DreamSpin Casino{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>💰 Crypto Deposit</h1>
+        <p class="subtitle">Deposit cryptocurrency to your DreamSpin account</p>
+    </div>
+
+    <div class="crypto-grid">
+        <div class="crypto-card">
+            <div class="crypto-header">
+                <h3>₿ Bitcoin (BTC)</h3>
+            </div>
+            <div class="qr-section">
+                <div class="qr-placeholder">📱 QR Code</div>
+            </div>
+            <div class="address-section">
+                <input type="text" readonly value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" id="btc-address" class="crypto-address">
+                <button onclick="copyAddress('btc-address')" class="copy-btn">Copy</button>
+            </div>
+            <p class="min-deposit">Minimum: 0.001 BTC</p>
+        </div>
+
+        <div class="crypto-card">
+            <div class="crypto-header">
+                <h3>Ξ Ethereum (ETH)</h3>
+            </div>
+            <div class="qr-section">
+                <div class="qr-placeholder">📱 QR Code</div>
+            </div>
+            <div class="address-section">
+                <input type="text" readonly value="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" id="eth-address" class="crypto-address">
+                <button onclick="copyAddress('eth-address')" class="copy-btn">Copy</button>
+            </div>
+            <p class="min-deposit">Minimum: 0.01 ETH</p>
+        </div>
+
+        <div class="crypto-card">
+            <div class="crypto-header">
+                <h3>₮ Tether (USDT)</h3>
+            </div>
+            <div class="qr-section">
+                <div class="qr-placeholder">📱 QR Code</div>
+            </div>
+            <div class="address-section">
+                <input type="text" readonly value="TYASr5UV6HEcXatwdFQfqLvhqjwjsTQB9t" id="usdt-address" class="crypto-address">
+                <button onclick="copyAddress('usdt-address')" class="copy-btn">Copy</button>
+            </div>
+            <p class="min-deposit">Minimum: 10 USDT</p>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h3>ℹ️ Important Information</h3>
+        <ul class="info-list">
+            <li>Deposits are credited after 3 network confirmations</li>
+            <li>Please double-check the address before sending</li>
+            <li>Only send the specified cryptocurrency to each address</li>
+            <li>Deposits typically arrive within 15-30 minutes</li>
+            <li>For demo purposes, funds are automatically credited</li>
+        </ul>
+    </div>
+
+    <div class="demo-section">
+        <h3>🎮 Demo Mode</h3>
+        <p>This is a demo casino. Click below to instantly add funds:</p>
+        <button onclick="addDemoFunds()" class="btn-primary btn-large">Add 1000 Credits</button>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function copyAddress(elementId) {
+    const input = document.getElementById(elementId);
+    input.select();
+    document.execCommand('copy');
+    
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.background = 'var(--success-color)';
+    
+    setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '';
+    }, 2000);
+}
+
+function addDemoFunds() {
+    fetch('/api/demo-deposit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ amount: 1000 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateBalance(data.balance);
+            alert('✓ 1000 credits added to your account!');
+        }
+    });
+}
+</script>
+{% endblock %}
+{% endblock %}
